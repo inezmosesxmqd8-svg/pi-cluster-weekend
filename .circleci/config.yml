@@ -1,0 +1,1619 @@
+version: 2.1
+
+jobs:
+  round1_check-quick-integration-tests:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: soak
+          command: |
+            mkdir -p /tmp/e2
+            set +o pipefail 2>/dev/null; awk 'BEGIN{for(i=1;i<=10000;i++) {h=0; s=sprintf("%d",i); for(j=1;j<=length(s);j++) h += substr(s,j,1)+0; print i,h}}' > /tmp/e2/ii.log; true
+            echo "task done ($(wc -c </tmp/e2/ii.log) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - ii.log
+  check-quick-integration-tests:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/big_task_output_v2.log 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  Beta_bun-fmt:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: flaky bits
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; seq 1 500 | awk 'END{print NR}'; true ; } > /tmp/e2/xd.pkg
+            echo "task done ($(wc -c </tmp/e2/xd.pkg) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - xd.pkg
+  bun-fmt:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/xd.pkg 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  C_io-rc:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: stuffed
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; tr -dc 'a-z' </dev/urandom | head -c 2097152 | fold -w16 | sort -u | wc -l; true ; } > /tmp/e2/ff.log
+            echo "task done ($(wc -c </tmp/e2/ff.log) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - ff.log
+  io-rc:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/xd.pkg 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  fixture_verify-production-artifact-bundle:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: turks head
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; ( for i in $(seq 1 16833); do printf "%d\n" $i; done ) | sort -n | tail -1; true ; } > /tmp/e2/big_task_output_v2.log
+            echo "task done ($(wc -c </tmp/e2/big_task_output_v2.log) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - big_task_output_v2.log
+  verify-production-artifact-bundle:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/big_task_output_v2.log 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  fetch_edge-v7:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: pressurized
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; echo "x" | awk '{for(i=0;i<10;i++)print i}'; true ; } > /tmp/e2/step-Z.log
+            echo "task done ($(wc -c </tmp/e2/step-Z.log) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - step-Z.log
+  edge-v7:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/big_task_output_v2.log 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  audit_rust-ship:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: jig step
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; echo "abcdef" | fold -w2; true ; } > /tmp/e2/step-23.out
+            echo "task done ($(wc -c </tmp/e2/step-23.out) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - step-23.out
+  rust-ship:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/big_task_output_v2.log 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  dispatch_canary:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: vibrato
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; cat /proc/loadavg 2>/dev/null | head -c 20; true ; } > /tmp/e2/c02.bin
+            echo "task done ($(wc -c </tmp/e2/c02.bin) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - c02.bin
+  canary:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/xd.pkg 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  red_canary-v4:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: straight shot
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; echo "deep" | base64 | base64 | base64 -d 2>/dev/null | wc -c; true ; } > /tmp/e2/rpt-04.csv
+            echo "task done ($(wc -c </tmp/e2/rpt-04.csv) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - rpt-04.csv
+  canary-v4:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/rpt-04.csv 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  A_chore-9371:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: jingle
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; cat /proc/version 2>/dev/null | head -c 80; true ; } > /tmp/e2/trace.gz
+            echo "task done ($(wc -c </tmp/e2/trace.gz) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - trace.gz
+  chore-9371:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/trace.gz 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  step2_phoenix-v2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: resolution hint
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; echo 'shout quietly' | tr '[:lower:]' '[:upper:]'; true ; } > /tmp/e2/phase-1.out
+            echo "task done ($(wc -c </tmp/e2/phase-1.out) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - phase-1.out
+  phoenix-v2:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/phase-1.out 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  A_check-partial-artifact-bundle:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: blip blop
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; cat /dev/urandom | od -An -tu8 | head -1 | awk '{print $1}'; true ; } > /tmp/e2/snap.ok
+            echo "task done ($(wc -c </tmp/e2/snap.ok) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - snap.ok
+  check-partial-artifact-bundle:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/snap.ok 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  fetcher_papa:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: deadlift
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; echo "the rain in spain" | tr -s ' ' | wc -c; true ; } > /tmp/e2/temporary.txt
+            echo "task done ($(wc -c </tmp/e2/temporary.txt) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - temporary.txt
+  papa:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/big_task_output_v2.log 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  canary_q1-ship:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: tibialis
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{FS=":"; getline; print NF}' /etc/passwd; true ; } > /tmp/e2/dump.sig
+            echo "task done ($(wc -c </tmp/e2/dump.sig) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - dump.sig
+  q1-ship:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/dump.sig 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  fetcher_juliet-2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: banner swap
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; date -d "next Friday" +%A 2>/dev/null || date +%A; true ; } > /tmp/e2/l4.state
+            echo "task done ($(wc -c </tmp/e2/l4.state) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - l4.state
+  juliet-2:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/l4.state 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  syncer_java17-fmt:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: monkeys fist
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; type echo; true ; } > /tmp/e2/metrics.csv
+            echo "task done ($(wc -c </tmp/e2/metrics.csv) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - metrics.csv
+  java17-fmt:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/big_task_output_v2.log 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  reserve_STAGE_LAB:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: lower volume
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; mkdir -p /tmp/_ln && echo src > /tmp/_ln/orig && ln /tmp/_ln/orig /tmp/_ln/hard && stat -c %h /tmp/_ln/orig && rm -rf /tmp/_ln; true ; } > /tmp/e2/.data
+            echo "task done ($(wc -c </tmp/e2/.data) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - .data
+  STAGE_LAB:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/.data 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  do_do-the-thing:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: all green
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; seq 1 50 | md5sum | awk '{print $1}'; true ; } > /tmp/e2/handoff.bin
+            echo "task done ($(wc -c </tmp/e2/handoff.bin) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - handoff.bin
+  do-the-thing:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/handoff.bin 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  fixture_pat-smoke:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: reverse fly
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; seq 1 1000 | awk 'NR%3==0' | wc -l; true ; } > /tmp/e2/cache.raw
+            echo "task done ($(wc -c </tmp/e2/cache.raw) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - cache.raw
+  pat-smoke:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/cache.raw 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  B_publish:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: blue screen
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; echo "$RANDOM$RANDOM" | md5sum; true ; } > /tmp/e2/stash.tmp
+            echo "task done ($(wc -c </tmp/e2/stash.tmp) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - stash.tmp
+  publish:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/big_task_output_v2.log 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  linter_hotfix-6473:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: pushback begin
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(i=0;i<64;i++)printf "%x",i%16; print ""}'; true ; } > /tmp/e2/MID.ok
+            echo "task done ($(wc -c </tmp/e2/MID.ok) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - MID.ok
+  hotfix-6473:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/big_task_output_v2.log 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  spin_ken-smoke:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: third try is lucky
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(i=0;i<10000;i++)s+=i*i;print s}'; true ; } > /tmp/e2/B.data
+            echo "task done ($(wc -c </tmp/e2/B.data) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - B.data
+  ken-smoke:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/xd.pkg 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  cook_DEPLOY_UAT:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: rattle
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(i=0;i<64;i++)printf "%x",i%16; print ""}'; true ; } > /tmp/e2/app.err
+            echo "task done ($(wc -c </tmp/e2/app.err) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - app.err
+  DEPLOY_UAT:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/xd.pkg 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  reload_romeo:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: stopper knot
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; echo 'shout quietly' | tr '[:lower:]' '[:upper:]'; true ; } > /tmp/e2/log.log
+            echo "task done ($(wc -c </tmp/e2/log.log) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - log.log
+  romeo:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/big_task_output_v2.log 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  reup_bob-test:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: nope
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{printf "%10.4f\n", 1/7}'; true ; } > /tmp/e2/temp5.txt
+            echo "task done ($(wc -c </tmp/e2/temp5.txt) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - temp5.txt
+  bob-test:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/big_task_output_v2.log 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  canary1_alice-test:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: heave line
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; cut -d: -f7 /etc/passwd | sort | uniq -c | sort -rn | head -3; true ; } > /tmp/e2/epsilon-end.txt
+            echo "task done ($(wc -c </tmp/e2/epsilon-end.txt) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - epsilon-end.txt
+  alice-test:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/xd.pkg 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  cook_Prepare_Staging9:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: massage gun
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; echo 'foo baz foobaz' | sed 's/foo/bar/g; s/baz/qux/g'; true ; } > /tmp/e2/xb.pkg
+            echo "task done ($(wc -c </tmp/e2/xb.pkg) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - xb.pkg
+  Prepare_Staging9:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/xb.pkg 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  vendor_build-staging-test-matrix:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: polyphony
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; echo "layered" | base64 | base64 | base64 | wc -c; true ; } > /tmp/e2/stage-complete.txt
+            echo "task done ($(wc -c </tmp/e2/stage-complete.txt) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - stage-complete.txt
+  build-staging-test-matrix:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/big_task_output_v2.log 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  preinit_cd-old:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: dong
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{s=sprintf("[%5s]","hi"); print s}'; true ; } > /tmp/e2/run-03.log
+            echo "task done ($(wc -c </tmp/e2/run-03.log) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - run-03.log
+  cd-old:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/run-03.log 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  A_full-send:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: bbq
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{t=0; for(i=1;i<=50;i++)t+=1.0/(i*i); printf "%.6f\n",t}'; true ; } > /tmp/e2/r4.state
+            echo "task done ($(wc -c </tmp/e2/r4.state) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - r4.state
+  full-send:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/big_task_output_v2.log 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+  orchestrate_smoke:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: tell the pm
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; yes "abc" | head -500 | sort | uniq | wc -l; true ; } > /tmp/e2/.d
+            echo "task done ($(wc -c </tmp/e2/.d) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - .d
+  smoke:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: End check
+          command: |
+            hexdump -s 10 -n 20 /tmp/e2/xd.pkg 2>/dev/null || true
+      - run:
+          name: Retrieve codebase
+          command: git clone --depth 3 --single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Decompress bundle
+          command: tar -xzvf content.tgz
+      - run:
+          name: Hash artifacts
+          command: mkdir -p artifacts
+      - run:
+          command: ls -la
+      - run:
+          no_output_timeout: 99m
+          command: /bin/sh -c "./check"
+
+  prefetch_canary-v4_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: backstep
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; seq 1 10000 | awk 'END{print NR}'; true ; } > /tmp/e2/rpt-04.csv
+            echo "task done ($(wc -c </tmp/e2/rpt-04.csv) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - rpt-04.csv
+  vendor_check-partial-artifact-bundle_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: grill marks
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; echo "test123text" | sed 's/[0-9]/[&]/g'; true ; } > /tmp/e2/snap.ok
+            echo "task done ($(wc -c </tmp/e2/snap.ok) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - snap.ok
+  g2_phoenix-v2_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: is it flaky
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; echo "deep" | base64 | base64 | base64 -d 2>/dev/null | wc -c; true ; } > /tmp/e2/phase-1.out
+            echo "task done ($(wc -c </tmp/e2/phase-1.out) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - phase-1.out
+  stepA_chore-9371_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: amber screen
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; head -c 9437184 /dev/urandom | md5sum; true ; } > /tmp/e2/trace.gz
+            echo "task done ($(wc -c </tmp/e2/trace.gz) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - trace.gz
+  teardown_juliet-2_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: reset
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; printf "%d\n" $((RANDOM * 2)) $((RANDOM / 2)) $((RANDOM ^ 42)) | md5sum; true ; } > /tmp/e2/l4.state
+            echo "task done ($(wc -c </tmp/e2/l4.state) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - l4.state
+  wire_STAGE_LAB_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: mdf sheet
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{a=1;b=1;for(i=0;i<30;i++){c=a+b;a=b;b=c}print c}'; true ; } > /tmp/e2/.data
+            echo "task done ($(wc -c </tmp/e2/.data) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - .data
+  vendor_cd-old_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: calf raise
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{print length("hello world")}'; true ; } > /tmp/e2/run-03.log
+            echo "task done ($(wc -c </tmp/e2/run-03.log) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - run-03.log
+  Delta_Prepare_Staging9_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: arnold press
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; echo "the dog chased the cat" | awk '{for(i=NF;i>0;i--)printf "%s%s",$i,(i>1?OFS:ORS)}'; true ; } > /tmp/e2/xb.pkg
+            echo "task done ($(wc -c </tmp/e2/xb.pkg) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - xb.pkg
+  checker_pat-smoke_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: power snatch
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; printf "%s\n" quick brown fox lazy dog | awk '{print length($0), $0}' | sort -n; true ; } > /tmp/e2/cache.raw
+            echo "task done ($(wc -c </tmp/e2/cache.raw) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - cache.raw
+  kick_q1-ship_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: cobweb
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; echo "spacey   middle" | awk 'gsub(/ +/," ")'; true ; } > /tmp/e2/dump.sig
+            echo "task done ($(wc -c </tmp/e2/dump.sig) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - dump.sig
+  g1_do-the-thing_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/e2
+      - run:
+          name: variation
+          command: |
+            mkdir -p /tmp/e2
+            { set +o pipefail 2>/dev/null; echo {A..Z} | tr -d ' ' | fold -w5 | head -3; true ; } > /tmp/e2/handoff.bin
+            echo "task done ($(wc -c </tmp/e2/handoff.bin) bytes written)"
+      - persist_to_workspace:
+          root: /tmp/e2
+          paths:
+            - handoff.bin
+workflows:
+  main:
+    jobs:
+      - red_canary-v4
+      - prefetch_canary-v4_2:
+          requires:
+            - red_canary-v4
+      - canary-v4:
+          requires:
+            - prefetch_canary-v4_2
+      - A_check-partial-artifact-bundle:
+          requires:
+            - prefetch_canary-v4_2
+      - vendor_check-partial-artifact-bundle_2:
+          requires:
+            - A_check-partial-artifact-bundle
+      - check-partial-artifact-bundle:
+          requires:
+            - vendor_check-partial-artifact-bundle_2
+      - step2_phoenix-v2:
+          requires:
+            - vendor_check-partial-artifact-bundle_2
+      - g2_phoenix-v2_2:
+          requires:
+            - step2_phoenix-v2
+      - phoenix-v2:
+          requires:
+            - g2_phoenix-v2_2
+      - A_chore-9371:
+          requires:
+            - g2_phoenix-v2_2
+      - stepA_chore-9371_2:
+          requires:
+            - A_chore-9371
+      - chore-9371:
+          requires:
+            - stepA_chore-9371_2
+      - fetcher_juliet-2:
+          requires:
+            - stepA_chore-9371_2
+      - teardown_juliet-2_2:
+          requires:
+            - fetcher_juliet-2
+      - juliet-2:
+          requires:
+            - teardown_juliet-2_2
+      - reserve_STAGE_LAB:
+          requires:
+            - teardown_juliet-2_2
+      - wire_STAGE_LAB_2:
+          requires:
+            - reserve_STAGE_LAB
+      - STAGE_LAB:
+          requires:
+            - wire_STAGE_LAB_2
+      - preinit_cd-old:
+          requires:
+            - wire_STAGE_LAB_2
+      - vendor_cd-old_2:
+          requires:
+            - preinit_cd-old
+      - cd-old:
+          requires:
+            - vendor_cd-old_2
+      - cook_Prepare_Staging9:
+          requires:
+            - vendor_cd-old_2
+      - Delta_Prepare_Staging9_2:
+          requires:
+            - cook_Prepare_Staging9
+      - Prepare_Staging9:
+          requires:
+            - Delta_Prepare_Staging9_2
+      - fixture_pat-smoke:
+          requires:
+            - Delta_Prepare_Staging9_2
+      - checker_pat-smoke_2:
+          requires:
+            - fixture_pat-smoke
+      - pat-smoke:
+          requires:
+            - checker_pat-smoke_2
+      - canary_q1-ship:
+          requires:
+            - checker_pat-smoke_2
+      - kick_q1-ship_2:
+          requires:
+            - canary_q1-ship
+      - q1-ship:
+          requires:
+            - kick_q1-ship_2
+      - do_do-the-thing:
+          requires:
+            - kick_q1-ship_2
+      - g1_do-the-thing_2:
+          requires:
+            - do_do-the-thing
+      - do-the-thing:
+          requires:
+            - g1_do-the-thing_2
+      - fixture_verify-production-artifact-bundle
+      - reup_bob-test
+      - verify-production-artifact-bundle:
+          requires:
+            - fixture_verify-production-artifact-bundle
+            - reup_bob-test
+      - bob-test:
+          requires:
+            - fixture_verify-production-artifact-bundle
+            - reup_bob-test
+      - edge-v7:
+          requires:
+            - fixture_verify-production-artifact-bundle
+            - reup_bob-test
+      - check-quick-integration-tests:
+          requires:
+            - fixture_verify-production-artifact-bundle
+            - reup_bob-test
+      - hotfix-6473:
+          requires:
+            - fixture_verify-production-artifact-bundle
+            - reup_bob-test
+      - full-send:
+          requires:
+            - fixture_verify-production-artifact-bundle
+            - reup_bob-test
+      - papa:
+          requires:
+            - fixture_verify-production-artifact-bundle
+            - reup_bob-test
+      - romeo:
+          requires:
+            - fixture_verify-production-artifact-bundle
+            - reup_bob-test
+      - java17-fmt:
+          requires:
+            - fixture_verify-production-artifact-bundle
+            - reup_bob-test
+      - rust-ship:
+          requires:
+            - fixture_verify-production-artifact-bundle
+            - reup_bob-test
+      - publish:
+          requires:
+            - fixture_verify-production-artifact-bundle
+            - reup_bob-test
+      - build-staging-test-matrix:
+          requires:
+            - fixture_verify-production-artifact-bundle
+            - reup_bob-test
+      - Beta_bun-fmt
+      - canary1_alice-test
+      - bun-fmt:
+          requires:
+            - Beta_bun-fmt
+            - canary1_alice-test
+      - alice-test:
+          requires:
+            - Beta_bun-fmt
+            - canary1_alice-test
+      - DEPLOY_UAT:
+          requires:
+            - Beta_bun-fmt
+            - canary1_alice-test
+      - io-rc:
+          requires:
+            - Beta_bun-fmt
+            - canary1_alice-test
+      - canary:
+          requires:
+            - Beta_bun-fmt
+            - canary1_alice-test
+      - ken-smoke:
+          requires:
+            - Beta_bun-fmt
+            - canary1_alice-test
+      - smoke:
+          requires:
+            - Beta_bun-fmt
+            - canary1_alice-test
